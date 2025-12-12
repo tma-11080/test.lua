@@ -82,7 +82,7 @@ local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 local PlayerMouse = Player:GetMouse()
 
-local CoreGuiService = (gethui and gethui()) or game:GetService("CoreGui")
+local CoreGui = (gethui and gethui()) or game:GetService("CoreGui");
 
 local redzlib = {
 	Themes = {

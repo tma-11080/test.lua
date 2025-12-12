@@ -2748,10 +2748,20 @@ function redzlib:MakeWindow(Configs)
 	return Window
 end
 
-pcall(function()
-    if getgenv()._RegisterRedzWindow then
-        getgenv()._RegisterRedzWindow(Window)
-    end
-end)
+function redzlib:CreateWindow(...)
+    local Window = {}  -- Window を作成
+    CloseButton.Activated:Connect(Window.CloseBtn)
+    MinimizeButton.Activated:Connect(Window.MinimizeBtn)
+
+    -- Window 作成後に登録＆ボタン生成
+    pcall(function()
+        if getgenv()._RegisterRedzWindow then
+            getgenv()._RegisterRedzWindow(Window)
+            createToggleButton(Window)  
+        end
+    end)
+
+    return Window  -- ここで Window を返す
+end
 
 return redzlib

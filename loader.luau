@@ -1,44 +1,76 @@
--- ▼▼▼ UI 開閉アイコン（左上固定・角丸） ▼▼▼
-
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
 local CoreGui = game:GetService("CoreGui")
 
+-- ScreenGui 作成
 local ToggleGui = Instance.new("ScreenGui")
 ToggleGui.Name = "RedzToggleGui"
 ToggleGui.ResetOnSpawn = false
-ToggleGui.Parent = CoreGui
+ToggleGui.Parent = player:WaitForChild("PlayerGui") -- CoreGuiでも可
 
+-- アイコン作成
 local ToggleButton = Instance.new("ImageButton")
 ToggleButton.Name = "OpenCloseIcon"
 ToggleButton.Parent = ToggleGui
 ToggleButton.Size = UDim2.new(0, 42, 0, 42)
-ToggleButton.Position = UDim2.new(0, 10, 0, 10) -- 左上固定
+ToggleButton.Position = UDim2.new(0, 10, 0, 10)
 ToggleButton.BackgroundTransparency = 1
-ToggleButton.Image = "rbxassetid://74521750290358" -- 指定されたアイコンID
+ToggleButton.Image = "rbxassetid://74521750290358" -- 任意のアイコンID
 
--- 角を丸くする
 local Corner = Instance.new("UICorner")
 Corner.CornerRadius = UDim.new(0, 10)
 Corner.Parent = ToggleButton
 
--- UI 可視状態
-local UIVisible = true
+-- ドラッグ可能にする
+local dragging, dragInput, dragStart, startPos
+ToggleButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = ToggleButton.Position
 
--- redzlib の Window 参照用
-local RedzWindow = nil
-
--- redzlib から Window を受け取る関数
-getgenv()._RegisterRedzWindow = function(Window)
-    RedzWindow = Window
-end
-
--- アイコン押して開閉
-ToggleButton.MouseButton1Click:Connect(function()
-    if not RedzWindow then return end
-    UIVisible = not UIVisible
-    RedzWindow.MainFrame.Visible = UIVisible
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
 end)
 
--- ▲▲▲ このコードを redzlib の先頭に貼ってください ▲▲▲
+ToggleButton.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if dragging and input == dragInput then
+        local delta = input.Position - dragStart
+        ToggleButton.Position = UDim2.new(
+            startPos.X.Scale, startPos.X.Offset + delta.X,
+            startPos.Y.Scale, startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+-- Window が生成されたらここで参照
+local RedzWindow = nil
+getgenv()._RegisterRedzWindow = function(Window)
+    RedzWindow = Window
+    -- 起動時に UI を表示
+    if RedzWindow.MainFrame then
+        RedzWindow.MainFrame.Visible = true
+    end
+end
+
+-- ボタン押したら開閉
+local UIVisible = true
+ToggleButton.MouseButton1Click:Connect(function()
+    if RedzWindow and RedzWindow.MainFrame then
+        UIVisible = not UIVisible
+        RedzWindow.MainFrame.Visible = UIVisible
+    end
+end)
 
 local MarketplaceService = game:GetService("MarketplaceService")
 local UserInputService = game:GetService("UserInputService")
